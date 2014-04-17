@@ -1,1 +1,75 @@
-123
+Imports System.Net
+Imports System.IO
+Imports System.Text
+Imports System.Security.Cryptography
+
+Module TradeBTCE
+
+  dim nonce As Integer
+  dim keyer As String = LCase("YOUR_API_KEY")
+  dim secret As String = LCase("SECRET")
+    
+  Public Function StringToSHA512(ByVal content As String) As String
+        
+    Dim M5 As New SHA512Managed
+    Dim bytestring() As Byte = Encoding.UTF8.GetBytes(content)
+    bytestring = M5.ComputeHash(bytestring)
+    Dim signer As String = Nothing
+    For Each bt As Byte In bytestring
+      signer &= bt.ToString("x2")
+    Next
+          
+    Return signer
+        
+  End Function
+    
+  dim postReqTapi As HttpWebRequest
+  dim postResponseTapi As HttpWebResponse
+    
+  Public Function GetInfo(ByVal type As String, ByRef nonce As Integer) As String
+
+    Dim postData As String
+    Dim response As String
+
+    postReqTapi = DirectCast(WebRequest.Create("https://btc-e.com/tapi"), HttpWebRequest)
+
+    postData = "method=getInfo" & "&nonce=" & nonce
+          
+    Dim KeyByte() As Byte = Encoding.ASCII.GetBytes(secret)
+    Dim HMAcSha As New HMACSHA512(Encoding.ASCII.GetBytes(secret))
+    Dim messagebyte() As Byte = Encoding.ASCII.GetBytes(postData)
+    Dim hashmessage() As Byte = HMAcSha.ComputeHash(messagebyte)
+
+    Dim Sign As String = BitConverter.ToString(hashmessage)
+    Sign = Sign.Replace("-", "")
+
+    postReqTapi.Method = "POST"
+    postReqTapi.KeepAlive = True
+    postReqTapi.Headers.Add("Key", keyer)
+    postReqTapi.Headers.Add("Sign", LCase(Sign))
+
+    postReqTapi.ContentType = "application/x-www-form-urlencoded"
+    postReqTapi.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 6.1; ru; rv:1.9.2.3) Gecko/20100401 Firefox/4.0 (.NET CLR 3.5.30729)"
+    postReqTapi.ContentLength = messagebyte.Length
+
+    Dim postreqstream As Stream = postReqTapi.GetRequestStream()
+    postreqstream.Write(messagebyte, 0, messagebyte.Length)
+    postreqstream.Close()
+
+    postResponseTapi = DirectCast(postReqTapi.GetResponse(), HttpWebResponse)
+    
+    Dim postreqreader As New StreamReader(postResponseTapi.GetResponseStream())
+
+    response = postreqreader.ReadToEnd
+          
+    Return response
+          
+  End Function
+        
+End Module
+      
+          
+          
+          
+          
+          
