@@ -5,7 +5,7 @@ Imports System.Security.Cryptography
 
 Module TradeBTCE
 
-  dim nonce As Integer
+  dim nonce As Integer = 1
   dim keyer As String = LCase("YOUR_API_KEY")
   dim secret As String = LCase("SECRET")
     
@@ -26,7 +26,7 @@ Module TradeBTCE
   dim postReqTapi As HttpWebRequest
   dim postResponseTapi As HttpWebResponse
     
-  Public Function GetInfo(ByVal type As String, ByRef nonce As Integer) As String
+  Public Function GetInfo(ByRef nonce As Integer) As String
 
     Dim postData As String
     Dim response As String
